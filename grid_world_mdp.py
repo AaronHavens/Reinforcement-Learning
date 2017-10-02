@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.patches as patches
 import pylab as pylab
 
-plt.ion()
+#plt.ion()
 
 data_set = 'data/small.csv'
 data = genfromtxt(data_set, dtype='int64', delimiter=',',skip_header=True)
@@ -17,43 +17,52 @@ def Q_max(Q,s):
 			max_r = reward
 	return max_r
 
-def Q_neighbors(grid,i,j):
-	max_r = 0
-	max_a = -1
-	if(i - 1 >= 0):
-		if(grid[i-1,j] > max_r):
-			max_r = grid[i-1,j]
-			max_a = 0
-	if(i + 1 < 10):
-		if(grid[i+1,j] > max_r):
-			max_a = 1
-			max_r = grid[i+1,j]
-	if(j + 1 < 10):
-		if(grid[i,j+1] > max_r):
-			max_a = 2
-			max_r = grid[i,j+1]
-	if(j - 1 >= 0):
-		if(grid[i,j-1] > max_r):
-			max_a = 3
+def get_MLE_T(data):
+	sas_p = {}
+	sa_n = {}
 
-	return max_a
+	for i in range(len(data[:,0])):
+		if not((data[i,0],data[i,1]) in sa_n):
+			sa_n[(data[i,0],data[i,1])] = 1
+		else:
+			sa_n[(data[i,0],data[i,1])] += 1
+
+		if not((data[i,0],data[i,1],data[i,3]) in sas_p):
+			sas_p[(data[i,0],data[i,1],data[i,3])] = 1
+		else:
+			sas_p[(data[i,0],data[i,1],data[i,3])] += 1
+			
+
+	for key,value in sas_p.items():
+		sas_p[key] /= sa_n[key[:2]]
+
+def get_action_P(sa_tuple,sas):
+	s_next = {}
+	for key, value in sas.items():
+		if(key[:2] == sa_tuple):
+			s_next[key[2]] = value
+	print(s_next)
 
 def plot_stage(ax,Q):
 	grid = np.zeros((10,10))
 	index = 0
-	reds = plt.get_cmap('inferno')
+	reds = plt.get_cmap('Greys')
 	max_q = np.max(Q)
 	print(max_q)
 	min_q = np.min(Q)
-	for i in range(10):
-		for j in range(10):
-			r_sum = np.sum(Q[index,:])
-			ax.add_patch(patches.Rectangle((i-.5, j-.5),1,1,facecolor = reds(r_sum/300)))
-			grid[i,j] = r_sum
+	for j in range(10):
+		for i in range(10):
+			r_m= np.max(Q[index,:])
+			ax.add_patch(patches.Rectangle((i-.5, j-.5),1,1,facecolor = reds(r_m/100)))
+			grid[i,j] = r_m
 			index += 1
-	for i in range(10):
-		for j in range(10):
-			a = Q_neighbors(grid,i,j)
+	print(grid)
+	index = 1
+	for j in range(10):
+		for i in range(10):
+			a = np.argmax(Q[index-1,:])
+			ax.text(i+.25, j+.25, "{:.1f}".format(grid[i,j]), ha="center", va="center",size=6,color='g')
+			ax.text(i-.25, j+.25, "{:d}".format(index), ha="center", va="center",size=6,color='b')
 			if(a == 0):
 				ax.arrow(i, j, -.25, 0, head_width=0.1, head_length=0.1, fc='k', ec='k')
 			elif(a == 1):
@@ -67,7 +76,7 @@ def plot_stage(ax,Q):
 				ax.arrow(i, j, 0, .25, head_width=0.1, head_length=0.1, fc='k', ec='k')
 				ax.arrow(i, j, .25, 0, head_width=0.1, head_length=0.1, fc='k', ec='k')
 				ax.arrow(i, j, -.25, 0, head_width=0.1, head_length=0.1, fc='k', ec='k')
-
+			index += 1
 	ax.set_xlim(-1,10)
 	ax.set_ylim(-1,10)
 
@@ -75,7 +84,7 @@ def plot_stage(ax,Q):
 
 
 gamma = .95
-alpha = .5
+alpha = .01
 n_states = 100
 n_actions = 4
 n_samples = len(data[:,0])
@@ -84,15 +93,10 @@ t = 0
 s = data[0,0]
 Q = np.zeros((100,4))
 ax = plt.axes()
-for i in range(n_samples):
-	Q[data[i,0]-1,data[i,1]-1] += alpha*(data[i,2]+gamma*Q_max(Q,data[i,3])-Q[data[i,0]-1,data[i,1]-1])
-	if((i+1)%5000 == 0):
-		plot_stage(ax,Q)
-		if(i != 49999):
-			plt.pause(.15)
-			plt.cla()
-		else:
-			plt.pause(100)
-		print(i)
+for k in range(200):
+	for i in range(n_samples):
+		Q[data[i,0]-1,data[i,1]-1] += alpha*(data[i,2]+gamma*Q_max(Q,data[i,3])-Q[data[i,0]-1,data[i,1]-1])
 
-
+	print(k)
+plot_stage(ax,Q)
+plt.show()
