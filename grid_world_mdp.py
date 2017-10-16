@@ -91,12 +91,14 @@ n_samples = len(data[:,0])
 t = 0
 
 s = data[0,0]
-Q = np.zeros((100,4))
+Q = np.zeros((n_states,n_actions))
+Q_aux = np.zeros((n_states,n_actions))
 ax = plt.axes()
 for k in range(200):
 	for i in range(n_samples):
 		Q[data[i,0]-1,data[i,1]-1] += alpha*(data[i,2]+gamma*Q_max(Q,data[i,3])-Q[data[i,0]-1,data[i,1]-1])
-
+		
 	print(k)
 plot_stage(ax,Q)
+plt.axis('off')
 plt.show()
