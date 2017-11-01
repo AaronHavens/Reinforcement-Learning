@@ -42,7 +42,7 @@ class Estimator():
 			model = SGDRegressor(learning_rate = "constant")
 			model.partial_fit([self.featurize_state(decode_state(data[0,0]))], [0])
 			self.models.append(model)
-
+#state = 1 + pos +vel*500
 	def featurize_state(self,state):
 		scaled = scaler.transform([state])
 		featurized = featurizer.transform(scaled)
@@ -69,16 +69,16 @@ def q_learn(data, estimator,episodes,gamma):
 			td_step = gamma*np.max(q_values_next)
 			td_target = reward + td_step
 			estimator.update(state,action-1,td_target)
-			print(td_step)
+			print(i)
 
 def write_policy(estimator):
-	with open('out_policy.txt', 'w') as f:
-		for pos in range(500):
-			for vel in range(100):
-				f.write('{},{},{}\n'.format(pos,vel,np.argmax(estimator.predict([pos,vel]))))
+	with open('medium.policy', 'w') as f:
+		for pos in range(500*100):
+				vel = i//500
+				pos = i%500 - 1
+				f.write('{}\n'.format(np.argmax(estimator.predict([pos,vel]))))
 
 
 estimator = Estimator(data)
-#print(estimator.featurize_state(decode_state(data[0,0])))
-q_learn(data,estimator,1,.5)
+q_learn(data,estimator,1,.99)
 write_policy(estimator)

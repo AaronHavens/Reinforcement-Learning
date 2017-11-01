@@ -17,32 +17,6 @@ def Q_max(Q,s):
 			max_r = reward
 	return max_r
 
-def get_MLE_T(data):
-	sas_p = {}
-	sa_n = {}
-
-	for i in range(len(data[:,0])):
-		if not((data[i,0],data[i,1]) in sa_n):
-			sa_n[(data[i,0],data[i,1])] = 1
-		else:
-			sa_n[(data[i,0],data[i,1])] += 1
-
-		if not((data[i,0],data[i,1],data[i,3]) in sas_p):
-			sas_p[(data[i,0],data[i,1],data[i,3])] = 1
-		else:
-			sas_p[(data[i,0],data[i,1],data[i,3])] += 1
-			
-
-	for key,value in sas_p.items():
-		sas_p[key] /= sa_n[key[:2]]
-
-def get_action_P(sa_tuple,sas):
-	s_next = {}
-	for key, value in sas.items():
-		if(key[:2] == sa_tuple):
-			s_next[key[2]] = value
-	print(s_next)
-
 def plot_stage(ax,Q):
 	grid = np.zeros((10,10))
 	index = 0
@@ -80,7 +54,11 @@ def plot_stage(ax,Q):
 	ax.set_xlim(-1,10)
 	ax.set_ylim(-1,10)
 
-	
+def write_policy(q):
+	with open('small.policy', 'w') as f:
+		for i in range(100):
+			f.write('{}\n'.format(np.argmax(q[i,:])))
+
 
 
 gamma = .95
@@ -92,13 +70,12 @@ t = 0
 
 s = data[0,0]
 Q = np.zeros((n_states,n_actions))
-Q_aux = np.zeros((n_states,n_actions))
 ax = plt.axes()
 for k in range(200):
 	for i in range(n_samples):
 		Q[data[i,0]-1,data[i,1]-1] += alpha*(data[i,2]+gamma*Q_max(Q,data[i,3])-Q[data[i,0]-1,data[i,1]-1])
-		
 	print(k)
+write_policy(Q)
 plot_stage(ax,Q)
 plt.axis('off')
 plt.show()
